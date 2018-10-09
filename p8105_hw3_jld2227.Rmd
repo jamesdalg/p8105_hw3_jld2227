@@ -7,4 +7,23 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
+First, we'll begin by importing the dataset, cleaning the names to be more appropriate, and
+focusing on the Overall Health topic (by filtering for this topic only in the BRFSS responses).
+Responses are filtered to only include the 5 ordinal categories, Excellent, Very Good,
+Good, Fair, Poor.
+```{r data_import}
+brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
+  janitor::clean_names() %>%  #Converts to snake case.
+  filter(topic == "Overall Health",
+         response %in% c("Excellent","Very Good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
+  mutate(response = factor(response,levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
+  
+  
+```
+Problem 2
+```{r instacart_import}
+
+```
+
