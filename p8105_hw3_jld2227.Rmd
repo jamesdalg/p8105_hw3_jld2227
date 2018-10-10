@@ -54,9 +54,13 @@ items_by_aisle <- instacart %>%
 count() %>% 
   arrange(
     desc(n)
-    )  %>% 
-  mutate(n = factor(n)) %>% 
-  forcats::fct_reorder(aisle, n) %>% 
+    ) %>%
+as.data.frame() %>% #makes the grouping variable modifyable 
+  as.tibble() %>%  #factor reorder.
+  mutate(aisle = forcats::fct_reorder(aisle, n))
+
+
+items_by_aisle %>% 
   ggplot(aes(x=aisle,y=n,color=n)) +
   geom_col() +
   scale_color_viridis_c() +
