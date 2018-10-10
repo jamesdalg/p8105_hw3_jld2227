@@ -61,13 +61,15 @@ as.data.frame() %>% #makes the grouping variable modifyable
 
 
 items_by_aisle %>% 
-  ggplot(aes(x=aisle,y=n,color=n)) +
+  ggplot(aes(x = aisle,y = n,color = n)) +
   geom_col() +
   scale_color_viridis_c() +
   theme_bw() +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
-        axis.ticks.x = element_blank()) + 
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.major = element_blank()) + 
   ylab("Items in aisle")
 ```
 
