@@ -78,35 +78,37 @@ items_by_aisle %>%
 Now, we'll create a table with the most popular items in the aisles for
 baking ingredients, dog food care, and packaged vegetables/fruits.
 ```{r}
-instacart %>% 
-  filter(aisle == "dog food care") %>% 
-  group_by(aisle) %>% 
-count(product_name) %>% 
-  arrange(
-    desc(n)
-  ) %>% 
-  select(product_name,n,everything())
-
+# instacart %>% 
+#   filter(aisle == "dog food care") %>% 
+#   group_by(aisle) %>% 
+# count(product_name) %>% 
+#   arrange(
+#     desc(n)
+#   ) %>% 
+#   select(product_name,n,everything())
+# 
 #  summarize(n = n(product_name))
 instacart %>% 
-  filter(aisle == "dog food care") %>% 
+  filter(aisle
+         %in% c("baking ingredients","dog food care","packaged vegetables fruits")) %>% 
   group_by(aisle) %>% 
 count(product_name) %>% 
-  arrange(
-    desc(n)
-  ) %>% 
-  select(product_name,n,everything())
-#  summarize(n = n(product_name))
-
-instacart %>% 
-  filter(aisle == "dog food care") %>% 
-  group_by(aisle) %>% 
-count(product_name) %>% 
+  filter(n == max(n)) %>%
   arrange(
     desc(n)
   ) %>% 
   select(product_name,n,everything())
 #  summarize(n = n(product_name))
+# 
+# instacart %>% 
+#   filter(aisle == "dog food care") %>% 
+#   group_by(aisle) %>% 
+# count(product_name) %>% 
+#   arrange(
+#     desc(n)
+#   ) %>% 
+#   select(product_name,n,everything())
+# #  summarize(n = n(product_name))
 
 ```
 
