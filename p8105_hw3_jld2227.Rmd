@@ -36,7 +36,6 @@ distinct_aisles <- instacart %>%
     desc(count)
   )
 
-distinct_aisles %>% kable()
 ```
 There appear to be `r nrow(distinct_aisles)` aisles. The aisles with the most are displayed in the
 table below:
@@ -61,18 +60,53 @@ as.data.frame() %>% #makes the grouping variable modifyable
 
 
 items_by_aisle %>% 
-  ggplot(aes(x = aisle,y = n,color = n)) +
-  geom_col() +
-  scale_color_viridis_c() +
-  scale_y_continuous(expand=c(0,0)) +
+  ggplot(aes(x = aisle,y = n,color = n)) + #establishes mappings.
+  geom_col() + #like geom_bar, but takes a variable for height.
+  scale_color_viridis_c() + #adds color
+  scale_y_continuous(expand=c(0,0)) + #removes whitespace at bottom.
    theme_bw() +
-  theme(axis.title.x = element_blank(),
+  theme(axis.title.x = element_blank(), #removes panel grid at back.
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
-        panel.grid.major = element_blank())
-  +
-  ylab("Items in aisle") + xlab("aisles, sorted by number of items")
+        panel.grid.minor = element_blank()) +
+  labels()
+  ylab("Items in aisle") +
+  xlab("aisles, sorted by number of items")
 ```
 
+Now, we'll create a table with the most popular items in the aisles for
+baking ingredients, dog food care, and packaged vegetables/fruits.
+```{r}
+instacart %>% 
+  filter(aisle == "dog food care") %>% 
+  group_by(aisle) %>% 
+count(product_name) %>% 
+  arrange(
+    desc(n)
+  ) %>% 
+  select(product_name,n,everything())
+
+#  summarize(n = n(product_name))
+instacart %>% 
+  filter(aisle == "dog food care") %>% 
+  group_by(aisle) %>% 
+count(product_name) %>% 
+  arrange(
+    desc(n)
+  ) %>% 
+  select(product_name,n,everything())
+#  summarize(n = n(product_name))
+
+instacart %>% 
+  filter(aisle == "dog food care") %>% 
+  group_by(aisle) %>% 
+count(product_name) %>% 
+  arrange(
+    desc(n)
+  ) %>% 
+  select(product_name,n,everything())
+#  summarize(n = n(product_name))
+
+```
 
