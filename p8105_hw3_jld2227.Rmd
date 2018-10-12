@@ -23,6 +23,24 @@ brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
   
   
 ```
+"In 2002, which states were observed at 7 locations?
+Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
+
+"Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
+```{r table_mean_ex}
+brfss %>% 
+  filter(year %in% c(2002,2006,2010),
+         locationabbr == "NY") %>%
+  group_by(locationdesc) %>% 
+  summarize(count_ex = 
+  sum(response=="Excellent"),
+  count_nonex = sum(response!="Excellent"),
+  count_resp= n(),
+  prop_ex = count_ex/(count_nonex+count_ex)) %>% 
+  select(locationdesc,prop_ex )
+```
+
+For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
 Problem 2
 ```{r instacart_import}
 instacart <- p8105.datasets::instacart %>% #Pulls dataframe out of package.
@@ -37,8 +55,7 @@ distinct_aisles <- instacart %>%
   )
 
 ```
-There appear to be `r nrow(distinct_aisles)` aisles. The aisles with the most are displayed in the
-table below:
+There appear to be `r nrow(distinct_aisles)` aisles. The aisles with the most are displayed in the table below with their counts:
 ```{r}
 distinct_aisles %>% 
   head() %>% 
@@ -113,3 +130,18 @@ mutate(order_dow = recode(.$order_dow,"0" = "Sunday",
 pink_ice_tbl
 ```
 
+Problem 3:
+```{r noaa_data_import}
+noaa <- p8105.datasets::ny_noaa %>% 
+  as.tibble() %>% 
+  janitor::clean_names()
+```
+"The goal is to do some exploration of this dataset. To that end, write a short description of the dataset, noting the size and structure of the data, describing some key variables, and indicating the extent to which missing data is an issue. Then, do or answer the following (commenting on the results of each):"
+This NOAA dataset for the new york area from `r noaa %>% distinct(id) %>% nrow()` stations has `r noaa %>% nrow` rows and `r noaa %>% ncol` columns,   which columns include total daily precipitation (prcp), miminum temperature, maximum temperature, snowfall,snowdepth at each station.
+```{r missing_data}
+prop.na<-function(x){
+   is.na(x) %>% mean()
+}
+sapply(noaa,  prop.na)
+```
+A quick look across the column shows that there is significant missing data (which aligns with the missing data reported in the dataset description,http://p8105.com/dataset_noaa.html), almost half of the data in the maximum temperature and minimum temperature are missing.
