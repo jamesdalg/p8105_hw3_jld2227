@@ -20,13 +20,19 @@ brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
   filter(topic == "Overall Health",
          response %in% c("Excellent","Very Good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
   mutate(response = factor(response,levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
-  
+brfss %>% 
+  filter(year==2002) %>% 
+  group_by(locationabbr) %>% 
+count(locationabbr) %>% 
+  arrange(-n)
   
 ```
-"In 2002, which states were observed at 7 locations?
+"In 2002, which states were observed at 7 locations?""
+Clearly, from the table, none were observed at exactly 7 locations.
 Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
 
 "Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
+The proportion of the response (in percent) is located in the data_value column, filtering by 2002,2006,2010, for NY and for Excellent responses only. The proportion therefore can be obtained by dividing by 100, from which point the mean and sd can be taken as summary statistics after grouping. 
 ```{r table_mean_ex}
 brfss %>% 
   filter(year %in% c(2002,2006,2010),
@@ -38,6 +44,25 @@ brfss %>%
   count_resp= n(),
   prop_ex = count_ex/(count_nonex+count_ex)) %>% 
   select(locationdesc,prop_ex )
+#across location (could mean means and sds for all regions)
+location_ex_stats<-brfss %>% 
+  filter(year %in% c(2002,2006,2010),
+         locationabbr == "NY",response=="Excellent") %>%
+  group_by(locationdesc) %>% 
+  summarize(ex_sd_prop = 
+  sd(data_value/100),
+  ex_mean_prop = mean(data_value/100))  %>% 
+    select(locationdesc,ex_sd_prop,ex_mean_prop)
+#in NY state, in entirety (for completeness, question suggests a mean and sd of the proportion across locations)
+statewide_ex_stats<-brfss %>% 
+  filter(year %in% c(2002,2006,2010),
+         locationabbr == "NY",response=="Excellent") %>%
+  group_by(locationabbr) %>% 
+  summarize(ex_sd_prop = 
+  sd(data_value/100),
+  ex_mean_prop = mean(data_value/100))  %>% 
+    select(locationabbr,ex_sd_prop,ex_mean_prop)
+
 ```
 
 For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
