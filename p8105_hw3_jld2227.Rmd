@@ -18,8 +18,8 @@ Good, Fair, Poor.
 brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
   janitor::clean_names() %>%  #Converts to snake case.
   filter(topic == "Overall Health",
-         response %in% c("Excellent","Very Good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
-  mutate(response = factor(response,levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
+         response %in% c("Excellent","Very good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
+  mutate(response = factor(response,levels = c("Excellent","Very good", "Good", "Fair", "Poor")))
 brfss %>% 
   filter(year==2002) %>% 
   group_by(locationabbr) %>% 
@@ -83,11 +83,16 @@ statewide_ex_stats
 "For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
 ```{r}
 brfss %>% 
-  group_by(locationabbr) %>%
+  group_by(locationabbr,response,year) %>%
     summarize(sd_prop = 
   sd(data_value/100,na.rm = T),
-  ex_mean_prop = mean(data_value/100,na.rm = T))
-  ggplot() + geom_point()
+  mean_prop = mean(data_value/100,na.rm = T)) %>% 
+  ggplot(aes(x=year,y=mean_prop,facet=response,color=response,fill=response)) +
+  geom_violin() + geom_point(alpha=0.3) +
+  scale_color_viridis_d(option="magma") +
+  scale_fill_viridis_d(option="viridis") +
+  facet_grid(.~response)
+
 ```
 
 Problem 2
