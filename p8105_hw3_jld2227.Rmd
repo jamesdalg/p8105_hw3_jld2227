@@ -80,9 +80,14 @@ statewide_ex_stats<-brfss %>%
 statewide_ex_stats
 ```
 
-For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
+"For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
 ```{r}
-brfss %>% ggplot()
+brfss %>% 
+  group_by(locationabbr) %>%
+    summarize(sd_prop = 
+  sd(data_value/100,na.rm = T),
+  ex_mean_prop = mean(data_value/100,na.rm = T))
+  ggplot() + geom_point()
 ```
 
 Problem 2
@@ -125,6 +130,7 @@ items_by_aisle %>%
   geom_col() + #like geom_bar, but takes a variable for height.
   scale_color_viridis_c() + #adds color
   scale_y_continuous(expand=c(0,0)) + #removes whitespace at bottom.
+  #scale_x_discrete(breaks=levels(items_by_aisle$aisle)[c(130,134)]) + #labels=items_by_aisle$aisle[c(130,134)],
    theme_bw() +
   theme(axis.title.x = element_blank(), #removes panel grid at back.
         axis.text.x = element_blank(),
