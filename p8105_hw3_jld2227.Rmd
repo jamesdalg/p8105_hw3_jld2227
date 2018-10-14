@@ -19,9 +19,9 @@ brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
   janitor::clean_names() %>%  #Converts to snake case.
   filter(topic == "Overall Health",
          response %in% c("Excellent","Very good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
-  mutate(response=recode(response,"Very good" = "Very Good")) %>% 
+  mutate(response = recode(response,"Very good" = "Very Good")) %>% 
   mutate(response = factor(response,levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
-brfss %>% 
+n_7<-brfss %>% 
   filter(year==2002) %>% 
   group_by(locationabbr) %>% 
 count(locationabbr) %>% 
@@ -30,7 +30,7 @@ filter(n==7)
   
 ```
 "In 2002, which states were observed at 7 locations?""
-Clearly, from the table, none were observed at exactly 7 locations. None had observations at exactly 7 locations in any year.
+Clearly, from the table, `r n_7` were observed at exactly 7 locations. `r n_7` had observations at exactly 7 locations in any year.
 Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
 ```{r spaghetti_plot}
 spaghetti<-brfss %>% 
@@ -39,11 +39,13 @@ spaghetti<-brfss %>%
   summarise(n = n()) %>% 
   ggplot(aes(x=year,y=n,color=locationabbr)) +
   geom_line() + 
-  scale_color_viridis_d(option="magma") +
-  xlab("number of ")
+  scale_color_viridis_d(option="viridis") +
+  labs(x="Year",y="Number of locations in each State",
+       color="State",
+       title="Number of locations in each state, by year, 2002-2010") +
+  theme_dark()
   #+ geom_text(aes(x=locationabbr)) 
 print(spaghetti)
-plotly::ggplotly(spaghetti)
 ```
 
 "Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
