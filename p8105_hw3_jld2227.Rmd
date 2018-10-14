@@ -51,27 +51,6 @@ print(spaghetti)
 "Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
 The proportion of the response (in percent) is located in the data_value column, filtering by 2002,2006,2010, for NY and for Excellent responses only. The proportion therefore can be obtained by dividing by 100, from which point the mean and sd can be taken as summary statistics after grouping. 
 ```{r table_mean_ex,results='asis'}
-# brfss %>% 
-#   filter(year %in% c(2002,2006,2010),
-#          locationabbr == "NY") %>%
-#   group_by(locationdesc) %>% 
-#   summarize(count_ex = 
-#   sum(response=="Excellent"),
-#   count_nonex = sum(response!="Excellent"),
-#   count_resp= n(),
-#   prop_ex = count_ex/(count_nonex+count_ex)) %>% 
-#   select(locationdesc,prop_ex )
-#across location (could mean means and sds for all regions)
-# location_ex_stats<-brfss %>% 
-#   filter(year %in% c(2002,2006,2010),
-#          locationabbr == "NY",response=="Excellent") %>%
-#   group_by(locationdesc) %>% 
-#   summarize(ex_sd_prop = 
-#   sd(data_value/100),
-#   ex_mean_prop = mean(data_value/100))  %>% 
-#     select(locationdesc,ex_sd_prop,ex_mean_prop)
-# location_ex_stats
-#in NY state, in entirety (for completeness, question suggests a mean and sd of the proportion across locations)
 statewide_ex_stats<-brfss %>% 
   filter(year %in% c(2002,2006,2010),
          locationabbr == "NY",response=="Excellent") %>%
