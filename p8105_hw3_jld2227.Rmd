@@ -18,73 +18,91 @@ Good, Fair, Poor.
 brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
   janitor::clean_names() %>%  #Converts to snake case.
   filter(topic == "Overall Health",
-         response %in% c("Excellent","Very good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
-  mutate(response = recode(response,"Very good" = "Very Good")) %>% 
-  mutate(response = factor(response,levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
+         response %in% c("Excellent", "Very good", "Good", "Fair", "Poor")) %>%     #Filters by overall health topic.
+  mutate(response = recode(response, "Very good" = "Very Good")) %>%  #fixes a case issue
+  mutate(response = factor(response, levels = c("Excellent","Very Good", "Good", "Fair", "Poor")))
 n_7 <- brfss %>% 
-  filter(year == 2002) %>% 
-  group_by(locationabbr) %>% 
-summarize(n_locations = n_distinct(locationdesc)) %>% 
-  arrange(-n_locations) %>% 
-filter(n_locations == 7) %>% 
-  pull(locationabbr) %>% 
-  paste(sep=",")
+  filter(year == 2002) %>%  #filters by the year 2002
+  group_by(locationabbr) %>%  #groups by state
+summarize(n_locations = n_distinct(locationdesc)) %>% #gets the number of distinct locations in each state. 
+  arrange(-n_locations) %>% #sorts descending by the number of locations. 
+filter(n_locations == 7) %>%  #filters by those that have precisely seven.
+  pull(locationabbr) %>%  #pulls the location column out for printing.
+  paste(.,sep=", ") #adds a comma between the states (converts to single string for printing to the md file).
   
 ```
 "In 2002, which states were observed at 7 locations?""
-Clearly, from the table, the following: `r print(n_7)` were observed at exactly 7 locations. `r print(n_7)` had observations at exactly 7 locations in any year.
+Clearly, from the table, the following states in 2002 were observed at exactly 7 locations: `r n_7`. 
 Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
+Now, we'll visualize the number of locations in each state across time for all states with a spaghetti plot (using many lines).
 ```{r spaghetti_plot}
-spaghetti <- brfss %>% 
-  filter(year >= 2002 & year <= 2010) %>%
-  group_by(locationabbr,year) %>% 
-  summarise(n = n()) %>% 
-  ggplot(aes(x = year, y = n, color = locationabbr)) +
-  geom_line() + 
-  scale_color_viridis_d(option = "viridis") +
-  labs(x = "Year",y = "Number of locations in each State",
+spaghetti <- brfss %>% #save to spaghetti ggplot object.
+  filter(year >= 2002 & year <= 2010) %>% #filter between 2002 and 2010.
+  group_by(locationabbr,year) %>%  #groups by state and year.
+  summarise(n = n()) %>%  #counts the number of observations meeting the above criteria.
+  ggplot(aes(x = year, y = n, color = locationabbr)) + #creates a plot with year horizontally, the number of stations vertically, and colored by the state.
+  geom_line() + #uses the line geom to create the spaghetti plot.
+  scale_color_viridis_d(option = "viridis") + #applies the viridis pallette using the viridis package (I could have used magma, but this seems to work best for this data).
+  labs(x = "Year",y = "Number of locations in each State", #sets the labels
        color = "State",
        title = "Number of locations in each state, by year, 2002-2010") +
-  theme_dark()
-  #+ geom_text(aes(x=locationabbr)) 
+  theme_dark() #applies the dark theme for contrast.
 print(spaghetti)
 ```
 
-"Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
-The proportion of the response (in percent) is located in the data_value column, filtering by 2002,2006,2010, for NY and for Excellent responses only. The proportion therefore can be obtained by dividing by 100, from which point the mean and sd can be taken as summary statistics after grouping. 
+Instruction: "Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State."
+The proportion of the response (in percent) is located in the data_value column, filtering by 2002,2006,2010, for NY and for Excellent responses only. The proportion therefore can be obtained by dividing by 100 (the data_value_unit makes it clear that these units are percentages), from which point the mean and sd can be taken as summary statistics after grouping. 
 ```{r table_mean_ex,results='asis'}
-statewide_ex_stats <- brfss %>% 
-  filter(year %in% c(2002,2006,2010),
-         locationabbr == "NY",response=="Excellent") %>%
-  group_by(locationabbr,year) %>% 
+statewide_ex_stats <- brfss %>% #Grabs the brfss object.
+  filter(year %in% c(2002,2006,2010), #Filters for 2002,2006, and 2010.
+         locationabbr == "NY",response=="Excellent") %>% #filter for NY and Ex
+  group_by(locationabbr,year) %>% #Groups by state and year.
   summarize(ex_sd_prop = 
   sd(data_value/100),
-  ex_mean_prop = mean(data_value/100))  %>% 
-    select(year,locationabbr,ex_sd_prop,ex_mean_prop)
-statewide_ex_stats
+  ex_mean_prop = mean(data_value/100))  %>% #calculates the mean and sd of the responses.
+    select(year,locationabbr,ex_sd_prop,ex_mean_prop) #removes all other columns but those of interest in the question.
+statewide_ex_stats %>% kable() #shows the table.
 ```
 
 "For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time."
+Now, we'll get the average response proportion in each response category and create a plot for each category over time (time horizontal, state level average vertical). I've chosen geom_point with the ggrepel package for variety and because it spaces out text labels specifically to avoid overlap (a common problem with geom_text).
 ```{r}
 brfss %>% 
-  group_by(locationabbr,response,year) %>%
+  group_by(locationabbr,response,year) %>% #groups by state, response (e.g. excellent), and year.
     summarize(sd_prop = 
   sd(data_value/100,na.rm = T),
-  mean_prop = mean(data_value/100,na.rm = T)) %>% 
-  ggplot(aes(x=year,y=mean_prop,facet=response,color=response,fill=response)) +
-  geom_violin() + geom_point(alpha = 0.3) +
-  scale_color_viridis_d(option = "magma") +
-  scale_fill_viridis_d(option = "viridis") +
-  facet_grid(.~response)
-
+  mean_prop = mean(data_value/100,na.rm = T)) %>%  #calculate mean and sd, removing missing values.
+  ggplot(aes(x=year,y=mean_prop,facet=response,color=response,fill=response)) + #Sets mappings
+  geom_violin() + #adds a violin geom.
+  geom_point(alpha = 0.3) + #adds points.
+  scale_color_viridis_d(option = "magma") + #adds the viridis magma color  for outlines.
+  scale_fill_viridis_d(option = "viridis") + #adds the standard viridis color fill
+  facet_grid(.~response) #create a plot for every response (Excellent to Poor)
+ #please note the final figures widths have been increased for readability.
 ```
 
 #Problem 2
-
 ```{r instacart_import}
 instacart <- p8105.datasets::instacart %>% #Pulls dataframe out of package.
   janitor::clean_names() #cleans names
+n_distinct_prod <- instacart %>% #gets the number of distinct products, aisles, and users.
+  select(product_name) %>% 
+  summarize(nprod = n_distinct(product_name)) %>% 
+  pull(nprod)
+n_aisles <- instacart %>%
+  select(aisle) %>%
+  summarize(naisle = n_distinct(aisle)) %>% 
+  pull(naisle)
+n_cust <- instacart %>%
+  select(user_id) %>%
+  summarize(ncust = n_distinct(user_id)) %>% 
+  pull(ncust)
+
 ```
+
+As noted in the description, the instacart dataset is a subset of purchase information by instacart customers and includes the items purchased along with time/date information. It contains `r instacart %>% nrow` observations and `r instacart %>% ncol` variables. Key variables include product name, with 
+`r n_distinct_prod` unique observations for all the products that have been ordered on instacart, found in `r n_aisles`, ordered by a whopping `r n_cust` customers. The average time between orders of `r instacart %>% pull(days_since_prior_order) %>% mean() ` and median `r instacart %>% pull(days_since_prior_order) %>% median()` suggests that most customers use instacart as an infrequent service, approximately twice per month. The mean hour of the day  of `r instacart %>% pull(order_hour_of_day) %>% mean()` in 24h time suggests that many customers tend to use the service later in the day rather than a morning service.
+
 ```{r distinct_aisles}
 distinct_aisles <- instacart %>%
   group_by(aisle) %>% 
@@ -99,9 +117,12 @@ There appear to be `r nrow(distinct_aisles)` aisles. The aisles with the most ar
 distinct_aisles %>% 
   head() %>% 
   kable()
-distinct_aisles %>% pull(aisle) %>% .[1]
+
 ```
 
+
+
+The the top aisle, by count, is `r distinct_aisles %>% pull(aisle) %>% .[1]`.
 The numbers of items in each aisle can be visualized with the following plot. The number of aisles is `r nrow(distinct_aisles)`, making it difficult to label all of the data (although key data is properly labeled in the table above). The previous table shows that `r distinct_aisles %>% pull(aisle) %>% .[1]` and `r distinct_aisles %>% pull(aisle) %>% .[2]` are the outliers near 15000, with `r distinct_aisles %>% pull(aisle) %>% .[3]` at roughly half the magnitude. The top 5 items are labeled, matching the prior table.
 
 ```{r items_by_aisle_plot}
@@ -109,27 +130,25 @@ items_by_aisle <- instacart %>%
   group_by(aisle) %>% 
 count() %>% 
   arrange(
-    desc(n)
+    desc(n) #arranges the aisles by item count, with the top count items listed first.
     ) %>%
 as.data.frame() %>% #makes the grouping variable modifyable 
   as.tibble() %>%  #factor reorder.
   mutate(aisle = forcats::fct_reorder(aisle, n))
 
-library(ggrepel)
+library(ggrepel) # a library built to stop text from overlapping with geom_text
 items_by_aisle %>% 
   ggplot(aes(x = aisle,y = n,fill = n)) + #establishes mappings.
   geom_col() + #like geom_bar, but takes a variable for height.
-#  scale_fill_viridis_c() +
   scale_fill_viridis_c() + #adds color
   scale_y_continuous(expand = c(0,0)) + #removes whitespace at bottom.
-  #scale_x_discrete(breaks=levels(items_by_aisle$aisle)[c(130,134)]) + #labels=items_by_aisle$aisle[c(130,134)],
    theme_bw() +
   geom_text_repel(data = items_by_aisle %>% head(n=5),aes(label = aisle,color = NULL)) +
-  theme(#axis.title.x = element_blank(), #removes panel grid at back.
+  theme(
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
+        panel.grid.minor = element_blank()) +  #removes panel grid at back.
   labs(x = "aisles, sorted by number of items",
          y = "Items in aisle",
        fill = "Items in aisle",
@@ -153,25 +172,25 @@ count(product_name) %>%
 
 ```
 
-Instruction"Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)."
-Now, we'll show the mean hour of the day at which the items are ordered.
+Instruction: "Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)."
+To display an example of the ability to see when particular items are ordered by time, comparatively, we'll show the mean hour of the day at which the items are ordered.
 ```{r}
 pink_ice_tbl<-instacart %>% 
-  filter(product_name %in% c("Pink Lady Apples","Coffee Ice Cream")) %>% 
-  group_by(product_name,order_dow) %>% 
-  summarize(mean_hour=mean(order_hour_of_day)) %>% 
-  spread(key=product_name,value=,mean_hour) %>% 
-mutate(order_dow = recode(.$order_dow,"0" = "Sunday",
+  filter(product_name %in% c("Pink Lady Apples","Coffee Ice Cream")) %>%  #filter for the two items of interest
+  group_by(product_name,order_dow) %>%  #group by item and day of week
+  summarize(mean_hour=mean(order_hour_of_day)) %>%  #get the mean hour by item and day of week.
+  spread(key=product_name,value=,mean_hour) %>%  #convert long to wide for human viewing.
+mutate(order_dow = recode(.$order_dow,"0" = "Sunday", #convert number days to word days for human viewing.
                              "1" = "Monday",
                              "2" = "Tuesday",
                              "3" = "Wednesday",
                              "4" = "Thursday",
                              "5" = "Friday",
                              "6" = "Saturday")) %>% 
-  janitor::clean_names() %>% 
+  janitor::clean_names() %>% #cleans the names once more as new columns have been added which are not snake case.
   select(order_dow,
          coffee_ice_cream,
-         pink_lady_apples)
+         pink_lady_apples) #select just the columns needed
 pink_ice_tbl
 ```
 
@@ -196,52 +215,45 @@ A quick look across the column shows that there is significant missing data (whi
 
 Instruction: "Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why? Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?"
 ```{r noaa_clean}
-noaa_clean <- p8105.datasets::ny_noaa %>% 
-  as.tibble() %>% 
-  janitor::clean_names() %>% 
-mutate(day = lubridate::day(noaa$date),
+noaa_clean <- p8105.datasets::ny_noaa %>% #Pull in the data.
+  as.tibble() %>%  #convert to tibble format.
+  janitor::clean_names() %>%  #convert to snake case.
+mutate(day = lubridate::day(noaa$date), #create day, month, and year variables.
        month = lubridate::month(noaa$date),
        year = lubridate::year(noaa$date),
-       tmax = as.numeric(tmax)/10,
+       tmax = as.numeric(tmax)/10, #convert tmax and tmin to numeric type and correct to comparable units of degrees celcius (rather than tenths of degrees)
        tmin = as.numeric(tmin)/10,
-       prcp = as.numeric(prcp)/10,
+       prcp = as.numeric(prcp)/10, #corrects the precipitation to be in milimeters rather than tenths of a mililiter
        snow = as.numeric(snow),
        snwd = as.numeric(snwd)) 
 #most common values for snowfall
-common_snow_vals <- noaa_clean %>% 
+common_snow_vals <- noaa_clean %>%  #grabs the most common values for snowfall
   count(snow) %>% 
-  arrange(-n)
+  arrange(-n) #in descending order.
 common_vals_string <- common_snow_vals %>%
   pull(snow) %>%
   head() %>%
-  paste(sep = ',')
+  paste(sep = ',') #converts to a string format for inline printing.
 ```
 
 The five most common values include: `r common_vals_string`. The reason for the large amount of snowfall missing is due to the fact that stations only record a subset of the variables and the reason there are are many days with zero is likely because there are many days in the year in new york with zero snowfall (particularly in the summer, spring and fall months).
 ```{r two_panel_avg_max_temp}
 mtmax_plot_d<-noaa_clean %>% 
-  filter(month %in% c(1,7)) %>%
-  mutate(month = recode(month, "1" = "January", "7" = "July")) %>% 
-  group_by(year,month) %>%
-  summarize(mean_tmax = mean(tmax,na.rm = TRUE)) %>% 
-  arrange(-mean_tmax)
-  ggplot(data=mtmax_plot_d,aes(x=year,y=mean_tmax,facet=month)) +
-    geom_point(alpha = 0.3) + 
+  filter(month %in% c(1,7)) %>% #Filters for january and july.
+  mutate(month = recode(month, "1" = "January", "7" = "July")) %>% #Converts month numbers to human readable names for the plot.
+  group_by(year,month) %>% #groups by year and month
+  summarize(mean_tmax = mean(tmax,na.rm = TRUE)) %>%  #gets the mean
+  arrange(-mean_tmax) #sorts descending by the mean
+  ggplot(data=mtmax_plot_d,aes(x=year,y=mean_tmax, #creates a new plot with year across the horizontal axis and the mean max temperature vertically.
+                               facet=month)) + #A separate plot is created for each month.
+    geom_point(alpha = 0.3) + #Set the plot to have transparent points as the means of plotting.
   geom_text_repel(#data=head(mtmax_plot_d,n=2),
     aes(label = year
                        # paste(year,format(mean_tmax,digits=3),sep=",") 
-           ), size = 2) +
-  facet_grid(.~month) +
-  labs(x = "Year",y = "Mean temperature")
+           ), size = 2) + #adds text labels that try not to overlap (thanks to ggrepel) and makes their size small enough so they do not overlap as well.
+  facet_grid(.~month) + #arranges the different month plots in a grid format.
+  labs(x = "Year",y = "Mean temperature Maximum, (deg C)",title="Mean temperature maximum, by Year") #sets the labels
 
-# noaa_clean %>% 
-#   filter(month %in% c(1,7)) %>%
-#   mutate(month = recode(month, "1" = "January", "7" = "July")) %>% 
-#   group_by(year,month) %>%
-#   ggplot(aes(x=year,y=tmax,facet=month,z=mean(tmax))) +
-#     stat_summary_hex(fun = mean) +
-#   facet_grid(.~month) +
-#   labs(x="Year",y="Mean temperature")
 
 ```
 Observable structure: There appears to be an increasing variability over time in the January temperatures with a definite outlier at 1990. There was a year that was one of the most cold on record the year before (another outlier). The july temperatures appear to be fairly regular with the exception of 1993.
@@ -256,7 +268,8 @@ tmaxmin_hex <- noaa_clean %>%
 snow_year_dist <- noaa_clean %>% 
   filter(snow > 0 & snow < 100) %>% 
     ggplot(aes(x=snow,y=year,color=snow,fill=snow)) + 
-  geom_density_ridges(scale=0.85,aes(y=as.factor(year))) +
+  geom_density_ridges_gradient(scale=0.85,gradient_lwd = .1,
+                               aes(x=snow,y=as.factor(year),fill=snow)) +
   scale_color_viridis_c() +
     scale_fill_viridis_c() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -264,3 +277,4 @@ tmaxmin_hex + snow_year_dist + plot_layout(ncol=2,widths=c(1,3))
 ```
 
 
+Geom_hex shows localized 2d peaks (high numbers of counts) near 20 and 0 degrees celcius for tmax and tmin. The snowfall distribution plot at right suggests very regular trends, but that snowfall has clusters of regions that have roughly 15, 20, 50, and 80 inches of snowfall per year. This suggests that many stations have similar snowfall patterns and that the yearly trends do not seem to drastically change year to year.
