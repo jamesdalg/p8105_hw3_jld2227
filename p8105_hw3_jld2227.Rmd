@@ -24,13 +24,15 @@ brfss <- p8105.datasets::brfss_smart2010 %>% #Pulls dataframe out of package.
 n_7 <- brfss %>% 
   filter(year == 2002) %>% 
   group_by(locationabbr) %>% 
-count(locationabbr) %>% 
-  arrange(-n) %>% 
-filter(n == 7)
+summarize(n_locations = n_distinct(locationdesc)) %>% 
+  arrange(-n_locations) %>% 
+filter(n_locations == 7) %>% 
+  pull(locationabbr) %>% 
+  paste(sep=",")
   
 ```
 "In 2002, which states were observed at 7 locations?""
-Clearly, from the table, `r print(n_7)` were observed at exactly 7 locations. `r print(n_7)` had observations at exactly 7 locations in any year.
+Clearly, from the table, the following: `r print(n_7)` were observed at exactly 7 locations. `r print(n_7)` had observations at exactly 7 locations in any year.
 Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
 ```{r spaghetti_plot}
 spaghetti <- brfss %>% 
