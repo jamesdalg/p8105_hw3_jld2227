@@ -208,7 +208,7 @@ mutate(day = lubridate::day(noaa$date),
 common_snow_vals <- noaa_clean %>% 
   count(snow) %>% 
   arrange(-n)
-common_vals_string<-common_snow_vals %>%
+common_vals_string <- common_snow_vals %>%
   pull(snow) %>%
   head() %>%
   paste(sep = ',')
@@ -216,15 +216,20 @@ common_vals_string<-common_snow_vals %>%
 
 The five most common values include: `r common_vals_string`. The reason for the large amount of snowfall missing is due to the fact that stations only record a subset of the variables and the reason there are are many days with zero is likely because there are many days in the year in new york with zero snowfall (particularly in the summer, spring and fall months).
 ```{r two_panel_avg_max_temp}
-noaa_clean %>% 
+mtmax_plot_d<-noaa_clean %>% 
   filter(month %in% c(1,7)) %>%
   mutate(month = recode(month, "1" = "January", "7" = "July")) %>% 
   group_by(year,month) %>%
   summarize(mean_tmax = mean(tmax,na.rm = TRUE)) %>% 
-  ggplot(aes(x=year,y=mean_tmax,facet=month)) +
-    geom_hex() +
+  arrange(-mean_tmax)
+  ggplot(data=mtmax_plot_d,aes(x=year,y=mean_tmax,facet=month)) +
+    geom_point(alpha = 0.3) + 
+  geom_text_repel(#data=head(mtmax_plot_d,n=2),
+    aes(label = year
+                       # paste(year,format(mean_tmax,digits=3),sep=",") 
+           ), size = 2) +
   facet_grid(.~month) +
-  labs(x="Year",y="Mean temperature")
+  labs(x = "Year",y = "Mean temperature")
 
 # noaa_clean %>% 
 #   filter(month %in% c(1,7)) %>%
@@ -235,6 +240,23 @@ noaa_clean %>%
 #   facet_grid(.~month) +
 #   labs(x="Year",y="Mean temperature")
 
+```
+Observable structure: There appears to be an increasing variability over time in the January temperatures with a definite outlier at 1990. There was a year that was one of the most cold on record the year before (another outlier). The july temperatures appear to be fairly regular with the exception of 1993.
+Outliers: 1990 for January (high). 2009 for July (low). 1992 for July (low). 2006 for January (high).
+
+"Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year."
+```{r}
+library(patchwork)
+tmaxmin_hex <- noaa_clean %>% 
+  ggplot(aes(x=tmax,y=tmin)) + geom_hex()
+snow_year_dist <- noaa_clean %>% 
+  filter(snow > 0 & snow < 100) %>% 
+    ggplot(aes(x=as.factor(year),y=snow,color=year,fill=year)) +
+  geom_violin() +
+  scale_color_viridis_c() +
+    scale_fill_viridis_c() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+tmaxmin_hex + snow_year_dist
 ```
 
 
