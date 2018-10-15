@@ -30,7 +30,7 @@ filter(n == 7)
   
 ```
 "In 2002, which states were observed at 7 locations?""
-Clearly, from the table, `r n_7` were observed at exactly 7 locations. `r n_7` had observations at exactly 7 locations in any year.
+Clearly, from the table, `r print(n_7)` were observed at exactly 7 locations. `r print(n_7)` had observations at exactly 7 locations in any year.
 Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010."
 ```{r spaghetti_plot}
 spaghetti <- brfss %>% 
@@ -97,9 +97,10 @@ There appear to be `r nrow(distinct_aisles)` aisles. The aisles with the most ar
 distinct_aisles %>% 
   head() %>% 
   kable()
+distinct_aisles %>% pull(aisle) %>% .[1]
 ```
 
-The numbers of items in each aisle can be visualized with the following plot. The number of aisles is `r nrow(distinct_aisles)`, making it difficult to label all of the data (although key data is properly labeled in the table above). The previous table shows that `r distinct_aisles %>% pull(aisle) %>% slice(1)` and `r distinct_aisles %>% pull(aisle) %>% slice(2)` are the outliers near 15000, with `r distinct_aisles %>% pull(aisle) %>% slice(3)` at roughly half the magnitude. The top 5 items are labeled, matching the prior table.
+The numbers of items in each aisle can be visualized with the following plot. The number of aisles is `r nrow(distinct_aisles)`, making it difficult to label all of the data (although key data is properly labeled in the table above). The previous table shows that `r distinct_aisles %>% pull(aisle) %>% .[1]` and `r distinct_aisles %>% pull(aisle) %>% .[2]` are the outliers near 15000, with `r distinct_aisles %>% pull(aisle) %>% .[3]` at roughly half the magnitude. The top 5 items are labeled, matching the prior table.
 
 ```{r items_by_aisle_plot}
 items_by_aisle <- instacart %>%
