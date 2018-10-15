@@ -271,7 +271,7 @@ snow_year_dist <- noaa_clean %>%
   filter(snow > 0 & snow < 100) %>% 
     ggplot(aes(x=snow,y=year,color=snow,fill=snow)) + 
   geom_density_ridges_gradient(scale=0.85,gradient_lwd = .1,
-                               aes(x=snow,y=as.factor(year),fill=snow)) +
+                               aes(x=snow,y=as.factor(year),fill=snow)) + 
   scale_color_viridis_c() +
     scale_fill_viridis_c() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
